@@ -37,7 +37,7 @@ jobs:
             -d packaging/gui.desktop \
             -i packaging/icon.png \
             --output appimage
-          mv *.AppImage vial-keymap-pdf-export-x86_64.AppImage
+          mv Vial_Keymap_PDF_Export-x86_64.AppImage vial-keymap-pdf-export-x86_64.AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: linux-release
