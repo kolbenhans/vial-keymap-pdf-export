@@ -20,7 +20,7 @@ pub struct ResolvedLabel {
 /// anything without a language-specific mapping falls back to the raw US
 /// label (English's own JSON tables are simply empty).
 pub fn resolve_label(key: &LayoutKey, language: &Language) -> ResolvedLabel {
-    let combo_keycode = key.shift_base.or(key.altgr_base);
+    let combo_keycode = key.shift_altgr_base.or(key.shift_base).or(key.altgr_base);
 
     let raw_base_label = || {
         combo_keycode
@@ -56,6 +56,10 @@ pub fn resolve_label(key: &LayoutKey, language: &Language) -> ResolvedLabel {
 }
 
 fn resolve_combo(key: &LayoutKey, language: &Language) -> Option<String> {
+    let shift_altgr_resolved = key
+        .shift_altgr_base
+        .and_then(|kc| language.shift_altgr_char(kc))
+        .map(str::to_string);
     let altgr_resolved = key.altgr_base.and_then(|kc| language.altgr_char(kc)).map(str::to_string);
     let shift_resolved = key.shift_base.and_then(|kc| {
         language
@@ -63,5 +67,26 @@ fn resolve_combo(key: &LayoutKey, language: &Language) -> Option<String> {
             .map(str::to_string)
             .or_else(|| crate::keycodes::keycode_label::get_layout_key(kc).and_then(|k| k.shifted))
     });
-    altgr_resolved.or(shift_resolved)
+    shift_altgr_resolved.or(altgr_resolved).or(shift_resolved)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// S(A(KC_E)) → Shift+AltGr+E should resolve to Polish "Ę", not fall
+    /// through to plain "E" or get misfiled as lone-shift/lone-altgr.
+    #[test]
+    fn shift_altgr_combo_resolves_via_language_table() {
+        // (mod_mask=LSFT|LALT|RIGHT_FLAG=0x16) << 8 | KC_E(0x08). QK_MODS's
+        // bits 8-12 *are* the mod flags (LCTL=bit8) — no separate marker.
+        let shift_altgr_e: u16 = (0x16 << 8) | 0x08;
+        let key = crate::keycodes::keycode_label::get_layout_key(shift_altgr_e)
+            .expect("mod-combo keycode should resolve to a LayoutKey");
+        assert_eq!(key.shift_altgr_base, Some(0x08));
+
+        let pl = crate::languages::load("pl_PL").expect("languages/pl_PL.json should load");
+        let resolved = resolve_label(&key, &pl);
+        assert_eq!(resolved.full, "Ę");
+    }
 }

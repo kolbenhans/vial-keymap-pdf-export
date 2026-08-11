@@ -104,10 +104,11 @@ directory is read fresh on every run).
 
 ```json
 {
-  "name": "German",
-  "base":    { "KC_Y": "Z", "KC_MINUS": "ß" },
-  "shifted": { "KC_8": "(", "KC_9": ")" },
-  "altgr":   { "KC_E": "€" }
+  "name": "Polish (Programmers)",
+  "base":        {},
+  "shifted":     {},
+  "altgr":       { "KC_E": "ę" },
+  "shift_altgr": { "KC_E": "Ę" }
 }
 ```
 
@@ -116,6 +117,9 @@ directory is read fresh on every run).
 - `shifted` — what `Shift + <keycode>` produces, when your keymap has a key
   explicitly programmed as e.g. `S(KC_8)`.
 - `altgr` — same, for `AltGr + <keycode>` combos.
+- `shift_altgr` — same, for `Shift + AltGr + <keycode>` combos (its own
+  combo, not covered by `shifted`/`altgr` alone — e.g. Polish Programmers'
+  Ę on Shift+AltGr+E).
 
 Keys are QMK keycode names (`KC_*`), e.g. `KC_A`, `KC_MINUS`,
 `KC_LEFT_BRACKET` — see [QMK's keycode reference](https://docs.qmk.fm/keycodes)

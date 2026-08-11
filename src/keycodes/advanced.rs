@@ -34,6 +34,21 @@ pub fn get_advanced_layout_key(keycode_bytes: u16) -> Option<LayoutKey> {
                 });
             }
 
+            // Shift+AltGr is its own combo on some layouts (e.g. Polish
+            // Programmers ę/Ę on E) — must be checked before the lone-AltGr
+            // case below, since its mask is a superset of AltGr's.
+            if (input_modifiers >> 8) == (MOD_LSFT | MOD_LALT | MOD_RIGHT_FLAG) {
+                return Some(LayoutKey {
+                    tap,
+                    argument: Some(mod_value_to_label(input_modifiers >> 8)),
+                    symbol,
+                    shift_altgr_base: Some(keycode),
+                    mod_mask: Some(input_modifiers >> 8),
+                    kind: KeycodeKind::Modifier,
+                    ..Default::default()
+                });
+            }
+
             let altgr_base =
                 ((input_modifiers >> 8) == (MOD_LALT | MOD_RIGHT_FLAG)).then_some(keycode);
 

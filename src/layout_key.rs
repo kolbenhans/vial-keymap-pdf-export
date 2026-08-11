@@ -177,6 +177,12 @@ pub struct LayoutKey {
     #[serde(default)]
     pub shift_base: Option<u16>,
 
+    /// Set when this key is a `S(A(KC_x))`-style Shift+AltGr combo (its own
+    /// mod combination, not just "shift" or "altgr" — e.g. Polish
+    /// Programmers ę/Ę live here, not in `shift_base`/`altgr_base`).
+    #[serde(default)]
+    pub shift_altgr_base: Option<u16>,
+
     #[serde(default)]
     pub base_keycode: Option<u16>,
 
@@ -205,6 +211,7 @@ impl Default for LayoutKey {
             shifted: None,
             altgr_base: None,
             shift_base: None,
+            shift_altgr_base: None,
             base_keycode: None,
             mod_mask: None,
             symbol: None,

@@ -18,6 +18,8 @@ struct LanguageFile {
     shifted: HashMap<String, String>,
     #[serde(default)]
     altgr: HashMap<String, String>,
+    #[serde(default)]
+    shift_altgr: HashMap<String, String>,
 }
 
 pub struct Language {
@@ -26,6 +28,7 @@ pub struct Language {
     base: HashMap<String, String>,
     shifted: HashMap<String, String>,
     altgr: HashMap<String, String>,
+    shift_altgr: HashMap<String, String>,
 }
 
 impl Language {
@@ -39,6 +42,12 @@ impl Language {
 
     pub fn altgr_char(&self, keycode_bytes: u16) -> Option<&str> {
         lookup(&self.altgr, keycode_bytes)
+    }
+
+    /// Shift+AltGr as its own combo — e.g. Polish Programmers Ę on
+    /// Shift+AltGr+E, distinct from plain Shift or plain AltGr on E.
+    pub fn shift_altgr_char(&self, keycode_bytes: u16) -> Option<&str> {
+        lookup(&self.shift_altgr, keycode_bytes)
     }
 }
 
@@ -82,5 +91,6 @@ pub fn load(code: &str) -> Result<Language, Box<dyn std::error::Error>> {
         base: file.base,
         shifted: file.shifted,
         altgr: file.altgr,
+        shift_altgr: file.shift_altgr,
     })
 }
