@@ -1,0 +1,126 @@
+use crate::layout_key::modifier_symbols;
+use crate::layout_key::{behavior_names, BorderStyle, KeycodeKind, Label, LayoutKey};
+use crate::keycodes::basic::get_basic_layout_key;
+use crate::keycodes::constants::*;
+
+pub fn get_advanced_layout_key(keycode_bytes: u16) -> Option<LayoutKey> {
+    match keycode_bytes {
+        input_bytes if QK_MODS.contains(&input_bytes) => {
+            let keycode = input_bytes & 0xff;
+            let inner_key = get_basic_layout_key(keycode);
+
+            let input_modifiers = input_bytes & 0x1f00;
+
+            let (tap, symbol) = match inner_key.clone() {
+                Some(k) => (k.tap, k.symbol),
+                None => (Label::new(format!("0x{:02X}", keycode)), None),
+            };
+
+            // A lone shift over a key with a shifted legend just yields that character
+            // (S(KC_1) == "!"), so render it as a plain key. Compare only the low nibble.
+            if (input_modifiers >> 8) & 0x0f == MOD_LSFT {
+                let native_shifted = inner_key.as_ref().and_then(|k| k.shifted.clone());
+                return Some(LayoutKey {
+                    tap: native_shifted
+                        .clone()
+                        .map(Label::new)
+                        .unwrap_or_else(|| tap.clone()),
+                    argument: Some(mod_value_to_label(input_modifiers >> 8)),
+                    symbol: symbol.clone(),
+                    shift_base: Some(keycode),
+                    mod_mask: Some(input_modifiers >> 8),
+                    kind: KeycodeKind::Modifier,
+                    ..Default::default()
+                });
+            }
+
+            let altgr_base =
+                ((input_modifiers >> 8) == (MOD_LALT | MOD_RIGHT_FLAG)).then_some(keycode);
+
+            Some(LayoutKey {
+                tap,
+                argument: Some(mod_value_to_label(input_modifiers >> 8)),
+                symbol,
+                kind: KeycodeKind::Modifier,
+                altgr_base,
+                mod_mask: Some(input_modifiers >> 8),
+                ..Default::default()
+            })
+        }
+        input_bytes if QK_MOD_TAP.contains(&input_bytes) => {
+            let remainder = input_bytes & !(QK_MOD_TAP.start);
+
+            let mod_value = (remainder >> 8) & 0x1F;
+            let mod_label = mod_value_to_label(mod_value);
+
+            let keycode = (remainder & 0xFF) as u8;
+            let tap_key = get_basic_layout_key(keycode as u16).unwrap_or_default();
+
+            Some(LayoutKey {
+                tap: tap_key.tap,
+                behavior: Some(behavior_names::MOD_TAP.label()),
+                argument: Some(mod_label),
+                shifted: tap_key.shifted,
+                symbol: tap_key.symbol,
+                kind: KeycodeKind::Basic,
+                mod_mask: Some(mod_value),
+                ..Default::default()
+            })
+        }
+        input_bytes if QK_LAYER_MOD.contains(&input_bytes) => {
+            let remainder = input_bytes & !(QK_LAYER_MOD.start);
+            let layer = remainder >> 5;
+
+            Some(LayoutKey {
+                tap: Label::new(format!("L{}", layer)),
+                kind: KeycodeKind::Modifier,
+                layer_ref: Some(layer as u8),
+                border: BorderStyle::None,
+                ..Default::default()
+            })
+        }
+        input_bytes if QK_ONE_SHOT_MOD.contains(&input_bytes) => {
+            let remainder = input_bytes & !(QK_ONE_SHOT_MOD.start);
+
+            let mod_label = mod_value_to_label(remainder);
+
+            Some(LayoutKey {
+                tap: mod_label,
+                behavior: Some(behavior_names::ONE_SHOT_MOD.label()),
+                kind: KeycodeKind::Modifier,
+                mod_mask: Some(remainder),
+                ..Default::default()
+            })
+        }
+        input_bytes if QK_LAYER_TAP.contains(&input_bytes) => {
+            let remainder = input_bytes & !(QK_LAYER_TAP.start);
+
+            let layer = remainder >> 8;
+
+            let keycode = (remainder & 0xFF) as u8;
+            let tap_key = get_basic_layout_key(keycode as u16).unwrap_or_default();
+
+            Some(LayoutKey {
+                tap: tap_key.tap,
+                shifted: tap_key.shifted,
+                symbol: tap_key.symbol,
+                kind: KeycodeKind::Modifier,
+                layer_ref: Some(layer as u8),
+                border: BorderStyle::None,
+                ..Default::default()
+            })
+        }
+        _ => None,
+    }
+}
+
+fn mod_value_to_label(mod_mask: u16) -> Label {
+    // Left/right share the low-nibble encoding, so only bits 0-3 matter.
+    modifier_symbols::glyphs(
+        mod_mask & MOD_LCTL != 0,
+        mod_mask & MOD_LSFT != 0,
+        mod_mask & MOD_LALT != 0,
+        mod_mask & MOD_LALT != 0 && mod_mask & MOD_RIGHT_FLAG != 0,
+        mod_mask & MOD_LGUI != 0,
+    )
+}

@@ -1,0 +1,15 @@
+[package]
+name = "vial-keymap-pdf-export"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Prints every layer of a VIA/Vial keyboard's keymap to a PDF, in your keyboard layout."
+repository = "https://github.com/kolbenhans/vial-keymap-pdf-export"
+
+[dependencies]
+qmk-via-api = "0.8.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+lzma-rs = "0.3"
+printpdf = "0.7"
+ttf-parser = "0.19"
