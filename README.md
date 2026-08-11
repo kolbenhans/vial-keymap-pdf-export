@@ -49,6 +49,13 @@ under `target/release/` (Linux) or `target\release\` (Windows, `.exe`).
 
 ## GUI
 
+Downloaded a [release](https://github.com/kolbenhans/vial-keymap-pdf-export/releases)
+instead of building? Run **`gui`** (Linux) / **`gui.exe`** (Windows) —
+`vial-keymap-pdf-export`/`.exe` is the CLI, not the GUI. Either binary is
+fully standalone: extract just that one file and run it, nothing else
+from the zip/tarball is required (languages are built in; the `languages/`
+folder alongside it is only for adding one without a rebuild, see below).
+
 ```bash
 ./target/release/gui          # Linux
 .\target\release\gui.exe      # Windows
