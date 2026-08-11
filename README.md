@@ -44,10 +44,24 @@ cd vial-keymap-pdf-export
 cargo build --release
 ```
 
-Produces `target/release/vial-keymap-pdf-export` (Linux) or
-`target\release\vial-keymap-pdf-export.exe` (Windows).
+Produces two binaries — `vial-keymap-pdf-export` (CLI) and `gui` (GUI) —
+under `target/release/` (Linux) or `target\release\` (Windows, `.exe`).
 
-## Run
+## GUI
+
+```bash
+./target/release/gui          # Linux
+.\target\release\gui.exe      # Windows
+```
+
+Pick a keyboard, language, portrait/landscape, layers per page, and where
+to save — then hit **Export PDF**. Same options as the CLI flags below, no
+terminal required.
+
+## CLI
+
+Scriptable, and useful for batch-exporting every connected keyboard at
+once (the GUI exports one device at a time).
 
 ```bash
 # Linux
