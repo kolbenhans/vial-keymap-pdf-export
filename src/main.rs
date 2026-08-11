@@ -22,7 +22,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(l) => l,
         Err(e) => {
             eprintln!("{e}");
-            eprintln!("Available: {}", languages::list_available().join(", "));
+            let codes: Vec<String> = languages::list_available().into_iter().map(|(c, _)| c).collect();
+            eprintln!("Available: {}", codes.join(", "));
             std::process::exit(1);
         }
     };

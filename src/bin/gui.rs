@@ -39,7 +39,7 @@ fn main() -> eframe::Result<()> {
 struct App {
     devices: Vec<KeyboardDeviceInfo>,
     selected_device: Option<usize>,
-    lang_codes: Vec<String>,
+    languages: Vec<(String, String)>, // (code, display name)
     selected_lang: String,
     portrait: bool,
     layers_per_page: usize,
@@ -52,17 +52,17 @@ struct App {
 impl App {
     fn new() -> Self {
         let devices = scan_keyboards().unwrap_or_default();
-        let lang_codes = languages::list_available();
-        let selected_lang = if lang_codes.iter().any(|c| c == "en_US") {
+        let languages = languages::list_available();
+        let selected_lang = if languages.iter().any(|(c, _)| c == "en_US") {
             "en_US".to_string()
         } else {
-            lang_codes.first().cloned().unwrap_or_default()
+            languages.first().map(|(c, _)| c.clone()).unwrap_or_default()
         };
 
         let mut app = Self {
             devices,
             selected_device: None,
-            lang_codes,
+            languages,
             selected_lang,
             portrait: false,
             layers_per_page: 1,
@@ -180,11 +180,17 @@ impl eframe::App for App {
 
             ui.horizontal(|ui| {
                 ui.label("Language:");
+                let selected_name = self
+                    .languages
+                    .iter()
+                    .find(|(code, _)| *code == self.selected_lang)
+                    .map(|(_, name)| name.clone())
+                    .unwrap_or_else(|| self.selected_lang.clone());
                 egui::ComboBox::from_id_salt("language")
-                    .selected_text(&self.selected_lang)
+                    .selected_text(selected_name)
                     .show_ui(ui, |ui| {
-                        for code in &self.lang_codes {
-                            ui.selectable_value(&mut self.selected_lang, code.clone(), code);
+                        for (code, name) in &self.languages {
+                            ui.selectable_value(&mut self.selected_lang, code.clone(), name);
                         }
                     });
             });

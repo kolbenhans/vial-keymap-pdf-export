@@ -1,13 +1,41 @@
-// Data-driven replacement for the old per-locale .rs match tables: every
-// language lives entirely in a JSON file under `languages/` (repo root, next
-// to `src/`), read fresh at every run. Adding a language needs a new file
-// there and nothing else — no `mod` declaration, no registry entry, no
-// rebuild.
+// Data-driven keyboard-layout translation. Every language shipped in this
+// repo's languages/ dir is embedded into the binary at compile time — that
+// makes it work regardless of how the binary reaches the user (tarball,
+// zip, AppImage; `CARGO_MANIFEST_DIR` only exists on the machine that
+// *built* the binary, which for release builds is a throwaway CI runner,
+// not the end user's machine). On top of that, the directory next to the
+// running executable is scanned at runtime for additional/override
+// *.json files, so a new language still doesn't need a rebuild — drop a
+// file in a `languages/` folder next to the binary, using an existing one
+// under `languages/` in this repo as a template.
 
 use qmk_via_api::keycodes::Keycode;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+macro_rules! builtin {
+    ($code:literal) => {
+        ($code, include_str!(concat!("../languages/", $code, ".json")))
+    };
+}
+
+const BUILTIN: &[(&str, &str)] = &[
+    builtin!("en_US"),
+    builtin!("en_GB"),
+    builtin!("de_DE"),
+    builtin!("de_CH"),
+    builtin!("fr_FR"),
+    builtin!("fr_BE"),
+    builtin!("fr_CH"),
+    builtin!("it_IT"),
+    builtin!("es_ES"),
+    builtin!("nl_NL"),
+    builtin!("nl_BE"),
+    builtin!("pl_PL"),
+    builtin!("ru_RU"),
+    builtin!("uk_UA"),
+];
 
 #[derive(Deserialize)]
 struct LanguageFile {
@@ -32,6 +60,17 @@ pub struct Language {
 }
 
 impl Language {
+    fn from_file(code: &str, file: LanguageFile) -> Self {
+        Self {
+            code: code.to_string(),
+            name: file.name,
+            base: file.base,
+            shifted: file.shifted,
+            altgr: file.altgr,
+            shift_altgr: file.shift_altgr,
+        }
+    }
+
     pub fn base_char(&self, keycode_bytes: u16) -> Option<&str> {
         lookup(&self.base, keycode_bytes)
     }
@@ -56,41 +95,68 @@ fn lookup(table: &HashMap<String, String>, keycode_bytes: u16) -> Option<&str> {
     table.get(keycode.as_ref()).map(String::as_str)
 }
 
-/// `<repo>/languages` — resolved at compile time (via `CARGO_MANIFEST_DIR`)
-/// but *read* fresh on every run, so new files there don't need a rebuild.
-fn languages_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("languages")
+/// `languages/` next to the running executable — not `CARGO_MANIFEST_DIR`,
+/// which only makes sense on the machine that built the binary.
+fn runtime_languages_dir() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    Some(exe.parent()?.join("languages"))
 }
 
-/// Locale codes for every `<code>.json` file found in `languages/`.
-pub fn list_available() -> Vec<String> {
-    let mut codes: Vec<String> = std::fs::read_dir(languages_dir())
-        .into_iter()
-        .flatten()
-        .flatten()
-        .filter_map(|entry| {
-            let path = entry.path();
-            (path.extension()? == "json")
-                .then(|| path.file_stem()?.to_str().map(str::to_string))
-                .flatten()
+/// `(locale code, display name)` for every built-in language plus any
+/// `*.json` next to the executable (a file there with the same code as a
+/// built-in overrides it — [`load`] re-reads that file itself in that case).
+pub fn list_available() -> Vec<(String, String)> {
+    let mut seen: HashMap<String, String> = BUILTIN
+        .iter()
+        .filter_map(|(code, json)| {
+            let name = serde_json::from_str::<LanguageFile>(json).ok()?.name;
+            Some((code.to_string(), name))
         })
         .collect();
-    codes.sort();
-    codes
+
+    if let Some(dir) = runtime_languages_dir() {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) != Some("json") {
+                    continue;
+                }
+                let Some(code) = path.file_stem().and_then(|s| s.to_str()) else {
+                    continue;
+                };
+                if let Ok(text) = std::fs::read_to_string(&path) {
+                    if let Ok(file) = serde_json::from_str::<LanguageFile>(&text) {
+                        seen.insert(code.to_string(), file.name);
+                    }
+                }
+            }
+        }
+    }
+
+    let mut list: Vec<(String, String)> = seen.into_iter().collect();
+    list.sort_by(|a, b| a.0.cmp(&b.0));
+    list
 }
 
+/// Loads a language by locale code: the executable-relative directory
+/// first (so it can override a built-in), then the embedded built-ins.
 pub fn load(code: &str) -> Result<Language, Box<dyn std::error::Error>> {
-    let path = languages_dir().join(format!("{code}.json"));
-    let text = std::fs::read_to_string(&path)
-        .map_err(|e| format!("can't read language file {}: {e}", path.display()))?;
-    let file: LanguageFile = serde_json::from_str(&text)
-        .map_err(|e| format!("invalid language file {}: {e}", path.display()))?;
-    Ok(Language {
-        code: code.to_string(),
-        name: file.name,
-        base: file.base,
-        shifted: file.shifted,
-        altgr: file.altgr,
-        shift_altgr: file.shift_altgr,
-    })
+    if let Some(dir) = runtime_languages_dir() {
+        let path = dir.join(format!("{code}.json"));
+        if let Ok(text) = std::fs::read_to_string(&path) {
+            let file: LanguageFile = serde_json::from_str(&text)
+                .map_err(|e| format!("invalid language file {}: {e}", path.display()))?;
+            return Ok(Language::from_file(code, file));
+        }
+    }
+
+    if let Some((_, json)) = BUILTIN.iter().find(|(c, _)| *c == code) {
+        let file: LanguageFile = serde_json::from_str(json)?;
+        return Ok(Language::from_file(code, file));
+    }
+
+    Err(format!(
+        "unknown language '{code}' (not built in, and no {code}.json next to the executable)"
+    )
+    .into())
 }

@@ -92,15 +92,21 @@ Example: `--lang=de_DE --portrait --layers-per-page=2 0`
 
 ## Adding a language
 
-Every language is a single JSON file in [`languages/`](languages/) — drop a
-new one in and it's available immediately, **no rebuild needed** (the
-directory is read fresh on every run).
+Every language is a single JSON file in [`languages/`](languages/). All of
+them are compiled into the binary, so it works standalone with zero setup
+— but you don't need to rebuild to add one: drop a `languages/xx_YY.json`
+file into the same folder as the executable (that's what the release
+tarball/zip/AppImage already ship next to the binary) and it's picked up
+immediately, no rebuild.
 
 1. Name the file `xx_YY.json` (locale code — e.g. `nl_NL.json`,
    `pl_PL.json`). The filename minus `.json` becomes the `--lang=` code.
 2. Copy an existing file as a starting point — `languages/de_DE.json` for a
    full example, `languages/en_US.json` for the minimal/empty template.
 3. Fill in only what actually differs from raw US labels.
+4. Drop it next to the built executable (`target/release/languages/` if
+   you're building from source — symlink `languages/` there once for a
+   live dev loop: `ln -s ../../languages target/release/languages`).
 
 ```json
 {
