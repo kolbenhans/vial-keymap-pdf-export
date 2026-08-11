@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libudev-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev \
+            libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+            libx11-dev libxi-dev libxrandr-dev libxcursor-dev \
+            libssl-dev pkg-config
+      - name: Build
+        run: cargo build --release
+      - name: Package tarball
+        run: |
+          mkdir dist
+          cp target/release/vial-keymap-pdf-export target/release/gui README.md LICENSE dist/
+          tar -C dist -czf vial-keymap-pdf-export-linux-x86_64.tar.gz .
+      - name: Build AppImage
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage
+          export ARCH=x86_64
+          ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
+            --appdir AppDir \
+            -e target/release/gui \
+            -d packaging/gui.desktop \
+            -i packaging/icon.png \
+            --output appimage
+          mv *.AppImage vial-keymap-pdf-export-x86_64.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: |
+            vial-keymap-pdf-export-linux-x86_64.tar.gz
+            vial-keymap-pdf-export-x86_64.AppImage
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release
+      - name: Package zip
+        shell: pwsh
+        run: |
+          mkdir dist
+          cp target/release/vial-keymap-pdf-export.exe dist/
+          cp target/release/gui.exe dist/
+          cp README.md dist/
+          cp LICENSE dist/
+          Compress-Archive -Path dist/* -DestinationPath vial-keymap-pdf-export-windows-x86_64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: vial-keymap-pdf-export-windows-x86_64.zip
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            linux-release/* windows-release/* \
+            --repo "${{ github.repository }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
