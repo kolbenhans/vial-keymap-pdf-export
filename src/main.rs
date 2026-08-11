@@ -1,16 +1,5 @@
-mod keycodes;
-mod kle_parser;
-mod languages;
-mod layout_geometry;
-mod layout_key;
-mod metrics;
-mod pdf;
-mod resolve;
-mod types;
-mod vial;
-
 use qmk_via_api::scan::scan_keyboards;
-use vial::VialProtocol;
+use vial_keymap_pdf_export::{languages, pdf, vial::VialProtocol};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut lang_code = "en_US".to_string();
