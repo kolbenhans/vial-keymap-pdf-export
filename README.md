@@ -80,8 +80,13 @@ Example: `--lang=de_DE --portrait --layers-per-page=2 0`
 
 Every language is a single JSON file in [`languages/`](languages/) — drop a
 new one in and it's available immediately, **no rebuild needed** (the
-directory is read fresh on every run). Filename (minus `.json`) is the
-`--lang=` code.
+directory is read fresh on every run).
+
+1. Name the file `xx_YY.json` (locale code — e.g. `nl_NL.json`,
+   `pl_PL.json`). The filename minus `.json` becomes the `--lang=` code.
+2. Copy an existing file as a starting point — `languages/de_DE.json` for a
+   full example, `languages/en_US.json` for the minimal/empty template.
+3. Fill in only what actually differs from raw US labels.
 
 ```json
 {
@@ -98,6 +103,8 @@ directory is read fresh on every run). Filename (minus `.json`) is the
   explicitly programmed as e.g. `S(KC_8)`.
 - `altgr` — same, for `AltGr + <keycode>` combos.
 
-Keys are QMK keycode names (`KC_*`). Leave a table empty (or the whole file
-minimal, like `languages/en_US.json`) for a layout with no deviations from
-the raw US labels.
+Keys are QMK keycode names (`KC_*`), e.g. `KC_A`, `KC_MINUS`,
+`KC_LEFT_BRACKET` — see [QMK's keycode reference](https://docs.qmk.fm/keycodes)
+for the full list. Leave a table empty (or the whole file minimal, like
+`languages/en_US.json`) for a layout with no deviations from the raw US
+labels.
