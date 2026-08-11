@@ -17,9 +17,9 @@ fn main() -> eframe::Result<()> {
         // et al.) generally auto-float a window that declares it can't be
         // resized, instead of stretching it to fill a tile.
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([460.0, 480.0])
-            .with_min_inner_size([460.0, 480.0])
-            .with_max_inner_size([460.0, 480.0])
+            .with_inner_size([700.0, 560.0])
+            .with_min_inner_size([700.0, 560.0])
+            .with_max_inner_size([700.0, 560.0])
             .with_resizable(false),
         ..Default::default()
     };
@@ -31,9 +31,6 @@ fn main() -> eframe::Result<()> {
             // bump it rather than relying on OS font-scaling settings, which
             // egui doesn't pick up on its own.
             cc.egui_ctx.set_zoom_factor(1.4);
-            cc.egui_ctx.all_styles_mut(|style| {
-                style.spacing.item_spacing.y = 14.0;
-            });
             Ok(Box::new(App::new()))
         }),
     )
@@ -147,6 +144,12 @@ impl eframe::App for App {
         }
 
         egui::CentralPanel::default().show(ui, |ui| {
+            // Scoped to this panel only — the file dialog is drawn in its
+            // own Area/Window off the shared context style, so this must
+            // not go through `ctx`/`all_styles_mut` or it'd cramp/space out
+            // the dialog's own rows too.
+            ui.style_mut().spacing.item_spacing.y = 14.0;
+
             ui.heading("Vial Keymap PDF Export");
             ui.add_space(8.0);
 
