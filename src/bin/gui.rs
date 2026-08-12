@@ -9,7 +9,7 @@
 use egui_file_dialog::FileDialog;
 use qmk_via_api::scan::{scan_keyboards, KeyboardDeviceInfo};
 use std::path::PathBuf;
-use vial_keymap_pdf_export::{languages, pdf, vial::VialProtocol};
+use keyprint::{languages, pdf, vial::VialProtocol};
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
@@ -24,7 +24,7 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "Vial Keymap PDF Export",
+        "KeyPrint",
         options,
         Box::new(|cc| {
             // egui's default text size reads small at normal desktop scale —
@@ -150,7 +150,7 @@ impl eframe::App for App {
             // the dialog's own rows too.
             ui.style_mut().spacing.item_spacing.y = 14.0;
 
-            ui.heading("Vial Keymap PDF Export");
+            ui.heading("KeyPrint");
             ui.add_space(8.0);
 
             ui.horizontal(|ui| {

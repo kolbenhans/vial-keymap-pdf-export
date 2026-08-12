@@ -1,5 +1,5 @@
 use qmk_via_api::scan::scan_keyboards;
-use vial_keymap_pdf_export::{languages, pdf, vial::VialProtocol};
+use keyprint::{languages, pdf, vial::VialProtocol};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut lang_code = "en_US".to_string();

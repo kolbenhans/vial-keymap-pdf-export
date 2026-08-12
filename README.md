@@ -1,4 +1,4 @@
-# vial-keymap-pdf-export
+# KeyPrint
 
 Connects to a VIA/Vial keyboard over USB and prints every layer of its
 current keymap to a PDF — one page (or several, stacked) per layer, laid out
@@ -39,22 +39,22 @@ same as keypeek and qmk-via-api — see [LICENSE](LICENSE).
 ## Build
 
 ```bash
-git clone https://github.com/kolbenhans/vial-keymap-pdf-export
-cd vial-keymap-pdf-export
+git clone https://github.com/kolbenhans/keyprint
+cd keyprint
 cargo build --release
 ```
 
-Produces two binaries — `vial-keymap-pdf-export` (CLI) and `gui` (GUI) —
-under `target/release/` (Linux) or `target\release\` (Windows, `.exe`).
+Produces two binaries — `keyprint` (CLI) and `gui` (GUI) — under
+`target/release/` (Linux) or `target\release\` (Windows, `.exe`).
 
 ## GUI
 
-Downloaded a [release](https://github.com/kolbenhans/vial-keymap-pdf-export/releases)
+Downloaded a [release](https://github.com/kolbenhans/keyprint/releases)
 instead of building? Run **`gui`** (Linux) / **`gui.exe`** (Windows) —
-`vial-keymap-pdf-export`/`.exe` is the CLI, not the GUI. Either binary is
-fully standalone: extract just that one file and run it, nothing else
-from the zip/tarball is required (languages are built in; the `languages/`
-folder alongside it is only for adding one without a rebuild, see below).
+`keyprint`/`.exe` is the CLI, not the GUI. Either binary is fully standalone:
+extract just that one file and run it, nothing else from the zip/tarball is
+required (languages are built in; the `languages/` folder alongside it is
+only for adding one without a rebuild, see below).
 
 ```bash
 ./target/release/gui          # Linux
@@ -72,10 +72,10 @@ once (the GUI exports one device at a time).
 
 ```bash
 # Linux
-./target/release/vial-keymap-pdf-export --lang=de_DE
+./target/release/keyprint --lang=de_DE
 
 # Windows (PowerShell / cmd)
-.\target\release\vial-keymap-pdf-export.exe --lang=de_DE
+.\target\release\keyprint.exe --lang=de_DE
 ```
 
 With no arguments it lists every connected VIA/Vial keyboard and writes a
@@ -83,7 +83,7 @@ PDF for each (`<Product Name>.pdf`, in whichever directory you ran it from).
 Pass a number to target just one:
 
 ```bash
-./target/release/vial-keymap-pdf-export --lang=de_DE 0
+./target/release/keyprint --lang=de_DE 0
 ```
 
 ### Options

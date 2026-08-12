@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Vial Keymap PDF Export
+Name=KeyPrint
 Comment=Print every layer of a VIA/Vial keyboard's keymap to a PDF
 Exec=gui
 Icon=icon

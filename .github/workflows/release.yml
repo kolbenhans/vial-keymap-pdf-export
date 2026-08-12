@@ -24,9 +24,9 @@ jobs:
       - name: Package tarball
         run: |
           mkdir dist
-          cp target/release/vial-keymap-pdf-export target/release/gui README.md LICENSE dist/
+          cp target/release/keyprint target/release/gui README.md LICENSE dist/
           cp -r languages dist/
-          tar -C dist -czf vial-keymap-pdf-export-linux-x86_64.tar.gz .
+          tar -C dist -czf keyprint-linux-x86_64.tar.gz .
       - name: Build AppImage
         run: |
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
@@ -44,13 +44,13 @@ jobs:
             -d packaging/gui.desktop \
             -i packaging/icon.png \
             --output appimage
-          mv Vial_Keymap_PDF_Export-x86_64.AppImage vial-keymap-pdf-export-x86_64.AppImage
+          mv KeyPrint-x86_64.AppImage keyprint-x86_64.AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: linux-release
           path: |
-            vial-keymap-pdf-export-linux-x86_64.tar.gz
-            vial-keymap-pdf-export-x86_64.AppImage
+            keyprint-linux-x86_64.tar.gz
+            keyprint-x86_64.AppImage
 
   windows:
     runs-on: windows-latest
@@ -63,16 +63,16 @@ jobs:
         shell: pwsh
         run: |
           mkdir dist
-          cp target/release/vial-keymap-pdf-export.exe dist/
+          cp target/release/keyprint.exe dist/
           cp target/release/gui.exe dist/
           cp README.md dist/
           cp LICENSE dist/
           Copy-Item -Recurse languages dist/languages
-          Compress-Archive -Path dist/* -DestinationPath vial-keymap-pdf-export-windows-x86_64.zip
+          Compress-Archive -Path dist/* -DestinationPath keyprint-windows-x86_64.zip
       - uses: actions/upload-artifact@v4
         with:
           name: windows-release
-          path: vial-keymap-pdf-export-windows-x86_64.zip
+          path: keyprint-windows-x86_64.zip
 
   release:
     needs: [linux, windows]
